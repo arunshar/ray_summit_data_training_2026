@@ -80,6 +80,36 @@ The two Ray Core labs were executed on a local machine instead. That environment
 
 That environment carries newer `pandas` and `pyarrow` than the 3.0.3 and 19.0.1 pinned in `requirements.txt`. Labs 1 and 2 import only `ray`, `time`, and `random`, so the drift does not reach their results. No other notebook was run there.
 
+## Committed notebook state
+
+Eleven notebooks ship here. As republished, every one of them was unexecuted, with zero stored outputs and no execution counts. That is still true of nine. The two Ray Core labs are the exception, and their outputs were produced on the local machine described above.
+
+| Notebook | Code cells | Cells with outputs | Error outputs |
+| --- | --- | --- | --- |
+| `1_Intro.ipynb` | 31 | 0 | 0 |
+| `2_Data.ipynb` | 52 | 0 | 0 |
+| `bonus/labs/Lab_1_Core_Fund.ipynb` | 5 | 2 | 0 |
+| `bonus/labs/Lab_2_Core_AIAssisted.ipynb` | 2 | 1 | 0 |
+| `bonus/labs/Lab_3_Data_Fund.ipynb` | 6 | 0 | 0 |
+| `bonus/labs/Lab_4_Data_AIAssisted.ipynb` | 3 | 0 | 0 |
+| `bonus/solutions/Lab_1_solution.ipynb` | 8 | 0 | 0 |
+| `bonus/solutions/Lab_2_solution.ipynb` | 4 | 0 | 0 |
+| `bonus/solutions/Lab_3_solution.ipynb` | 10 | 0 | 0 |
+| `bonus/solutions/Lab_4_solution.ipynb` | 6 | 0 | 0 |
+| `jobs_demo/1_Job.ipynb` | 8 | 0 | 0 |
+
+Three notes on that table:
+
+- Lab 1 shows outputs on two of five code cells and Lab 2 on one of two. The rest are the empty TODO stubs the labs ship with, so they print nothing. Every code cell in both notebooks holds an execution count and none produced an error output. The recorded figures are the sequential baselines the exercises ask students to beat, at 5.04 s wall for Lab 1 and 12.5 s wall for Lab 2.
+- One code cell in `bonus/labs/Lab_4_Data_AIAssisted.ipynb` carries execution count 1 with no output next to it. That is a leftover counter from an authoring session whose outputs were stripped, not a partial run.
+- `language_info` records Python 3.11.11 for six notebooks and 3.12.13 for three, so the set was authored across at least two environments. Labs 1 and 2 now read 3.11.15 because the local run rewrote that field. Both were authored at 3.12.13.
+
+To strip the lab outputs and return the tree to its original state:
+
+```
+git checkout bonus/labs/Lab_1_Core_Fund.ipynb bonus/labs/Lab_2_Core_AIAssisted.ipynb
+```
+
 ## Running outside Anyscale
 
 The notebooks assume the Anyscale platform. Four things break off-platform: data paths, cluster attach, AWS credentials, and the job submit flow. The Ray code itself is portable.
@@ -103,3 +133,22 @@ The credentials one is easy to miss. `intro.py` builds a plain `boto3.client('s3
 5. Pin Ray at exactly 2.55.1. The Dockerfile never pins Ray. The base image supplied 2.55.1, and the notebooks use version-sensitive symbols such as `ray.data.llm.build_processor` and `ray.data.SaveMode.OVERWRITE`. The `requirements.txt` in this repo pins it.
 
 The jobs demo YAML uses the Anyscale Jobs schema, and `jobs_demo/1_Job.ipynb` submits it with `anyscale job submit`. On plain Ray, edit the path constants in `jobs_demo/create_extended_desc_job.py` and run it with `ray job submit` instead.
+
+## A note on scope
+
+This is study material, not a reproducible pipeline. It carries no datasets, no model weights, and no lockfile. `requirements.txt` holds version pins without hashes or transitive pins, so it does not rebuild the course image byte for byte.
+
+What runs on a plain CPU machine:
+
+- `bonus/labs/Lab_1_Core_Fund.ipynb` and `bonus/labs/Lab_2_Core_AIAssisted.ipynb`. Both are pure Ray Core over synthetic data behind a bare `ray.init()`. Both were executed here and their outputs are committed.
+- `bonus/solutions/Lab_1_solution.ipynb` and `bonus/solutions/Lab_2_solution.ipynb` import the same three modules and name no external path, so they look CPU-clean by the same test. Neither was executed here, and both still ship without outputs.
+
+What needs more than a CPU:
+
+- `2_Data.ipynb` needs the full image even for its CPU half. The first code cell reads `from ray.data.llm import vLLMEngineProcessorConfig, build_processor` next to `torch`, `transformers`, and `sentence_transformers`. Ingest, filtering, and the expression language are ordinary tabular work that a plain `ray[data]` install would handle, but that import runs before any of it. Moving it down into the section that uses it would free the tabular half.
+- `1_Intro.ipynb` calls into `intro.py`, which builds a `boto3.client('s3')` and pulls two pickles at actor construction. It needs AWS credentials.
+- `bonus/labs/Lab_3_Data_Fund.ipynb` and `bonus/solutions/Lab_3_solution.ipynb` read `s3://anyscale-public-materials-use2/ecom/catalog` and write under `/mnt/cluster_storage`. The compute is CPU-sized, but both paths have to exist.
+- `bonus/labs/Lab_4_Data_AIAssisted.ipynb` and `bonus/solutions/Lab_4_solution.ipynb` need a GPU and the Gemma 3 snapshot under `/mnt/cluster_storage/hf_cache`.
+- `jobs_demo/` needs the Anyscale Jobs control plane. Its YAML also points at `anyscale/image/c26:5`, an Anyscale-internal image that outside accounts cannot pull.
+
+The portability section above covers the data paths, the storage prefixes, and the cluster attach. It does not make the GPU sections run without GPUs.
