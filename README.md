@@ -67,6 +67,9 @@ Two limits apply to that table. The Dockerfile never pins Ray, so 2.55.1 is read
 
 The two Ray Core labs were executed on a local machine instead. That environment:
 
+These values were read from the machine that executed the two Ray Core labs, not from any file
+in this repository, so nothing here can corroborate them.
+
 | Component | Version |
 | --- | --- |
 | Machine | Apple Silicon arm64, macOS 26.7 |
@@ -82,7 +85,7 @@ That environment carries newer `pandas` and `pyarrow` than the 3.0.3 and 19.0.1 
 
 ## Committed notebook state
 
-Eleven notebooks ship here. As republished, every one of them was unexecuted, with zero stored outputs and no execution counts. That is still true of nine. The two Ray Core labs are the exception, and their outputs were produced on the local machine described above.
+Eleven notebooks ship here. As republished, none of them carried stored outputs. Ten had no execution counts at all, and `bonus/labs/Lab_4_Data_AIAssisted.ipynb` carried a single leftover execution count on one cell with no output beside it. The two Ray Core labs are now the exception: they were executed here and their outputs were produced on the local machine described above. The other nine still ship without stored outputs.
 
 | Notebook | Code cells | Cells with outputs | Error outputs |
 | --- | --- | --- | --- |
