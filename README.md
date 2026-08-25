@@ -27,7 +27,9 @@ From `outline-compute.md`:
 
 ## Running outside Anyscale
 
-The notebooks assume the Anyscale platform. Three things break off-platform: data paths, cluster attach, and the job submit flow. The Ray code itself is portable.
+The notebooks assume the Anyscale platform. Four things break off-platform: data paths, cluster attach, AWS credentials, and the job submit flow. The Ray code itself is portable.
+
+The credentials one is easy to miss. `intro.py` builds a plain `boto3.client('s3')` and downloads `vectorizer.pickle` and `category_index_map.pickle` at actor construction, using the default credential chain. On a machine with no AWS credentials that raises `NoCredentialsError` rather than falling back to anonymous reads, even though the bucket is public. The bucket name and keys are hardcoded at `intro.py:28-30`, so repointing the `/mnt` prefixes does not help. Either configure credentials, or edit those lines to load the two pickles from your local mirror.
 
 1. Mirror the data first. Every dataset and model weight lives in one public S3 prefix that Anyscale can retire at any time:
 
