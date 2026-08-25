@@ -2,6 +2,10 @@
 
 Course material for the Ray Summit 2026 training "Multimodal Data Pipelines for AI Systems". The course teaches large-scale data processing and multimodal inference with Ray Data through an end-to-end e-commerce scenario.
 
+## Provenance
+
+This is Ray Summit 2026 Anyscale course material, republished with permission for personal study. Original content copyright 2026 Anyscale.
+
 ## Layout
 
 Two instructor sessions plus bonus labs and a jobs demo:
@@ -20,10 +24,61 @@ Two instructor sessions plus bonus labs and a jobs demo:
 
 From `outline-compute.md`:
 
-- Planned class compute: one m5.2xlarge head node plus two g5.2xlarge workers (one NVIDIA A10G with 24 GB each).
-- Minimum: A10G or better acceleration, 48 GB total GPU RAM.
+- Planned class compute: one m5.2xlarge head node plus two g5.2xlarge workers.
+- Minimum: A10G or better acceleration, 48 GB total GPU RAM across those workers.
 - Labs 1 and 2 are pure Ray Core on synthetic data and need no GPU.
 - The jobs demo YAML requests eight g5.2xlarge workers, but the script sizes its actor pool to whatever GPU count Ray reports, so smaller allocations work with proportionally longer runtime.
+
+`outline-compute.md` gives the instance types and the 48 GB total. It records no per-GPU memory figure, so none is stated here.
+
+### Tested configuration
+
+The configuration this material targets. Values come from `Dockerfile` unless the row says otherwise.
+
+| Component | Version |
+| --- | --- |
+| Base image | `anyscale/ray-llm:2.55.1-py311-cu128` |
+| Python | 3.11, from the `py311` segment of the base image tag |
+| CUDA | 12.8, from the `cu128` segment of the base image tag |
+| `ray[data,train,tune,serve,llm]` | 2.55.1, from `requirements.txt` |
+| `torch` | 2.10.0 |
+| `torchvision` | 0.25.0 |
+| `transformers` | 4.57.4 |
+| `vllm[runai]` | 0.18.0 |
+| `sentence-transformers` | 5.2.2 |
+| `diffusers` | 0.32.2 |
+| `accelerate` | 1.5.2 |
+| `datasets` | 3.5.0 |
+| `evaluate` | 0.4.3 |
+| `scikit-learn` | 1.6.1 |
+| `xgboost` | 2.1.4 |
+| `pytorch-lightning` | 2.5.1 |
+| `pandas` | 3.0.3 |
+| `pyarrow` | 19.0.1 |
+| `matplotlib` | 3.10.1 |
+| `tensorboard` | 2.19.0 |
+| `torch-tb-profiler` | 0.4.3 |
+| `textdistance` | 4.6.3 |
+| Head node | m5.2xlarge, from `outline-compute.md` |
+| Worker nodes | 2 x g5.2xlarge, from `outline-compute.md` |
+| Minimum acceleration | A10G or better, 48 GB total GPU RAM, from `outline-compute.md` |
+
+Two limits apply to that table. The Dockerfile never pins Ray, so 2.55.1 is read from the base image tag and from `requirements.txt` rather than from a pip pin in the image build. Separately, nothing in this repository was run on that image here. Those versions were read from files, not observed at runtime.
+
+The two Ray Core labs were executed on a local machine instead. That environment:
+
+| Component | Version |
+| --- | --- |
+| Machine | Apple Silicon arm64, macOS 26.7 |
+| GPU | none |
+| Python | 3.11.15 |
+| `ray` | 2.55.1 |
+| `nbconvert` | 7.17.1 |
+| `ipykernel` | 7.3.0 |
+| `pandas` | 3.0.5 |
+| `pyarrow` | 25.0.1 |
+
+That environment carries newer `pandas` and `pyarrow` than the 3.0.3 and 19.0.1 pinned in `requirements.txt`. Labs 1 and 2 import only `ray`, `time`, and `random`, so the drift does not reach their results. No other notebook was run there.
 
 ## Running outside Anyscale
 
@@ -48,7 +103,3 @@ The credentials one is easy to miss. `intro.py` builds a plain `boto3.client('s3
 5. Pin Ray at exactly 2.55.1. The Dockerfile never pins Ray. The base image supplied 2.55.1, and the notebooks use version-sensitive symbols such as `ray.data.llm.build_processor` and `ray.data.SaveMode.OVERWRITE`. The `requirements.txt` in this repo pins it.
 
 The jobs demo YAML uses the Anyscale Jobs schema, and `jobs_demo/1_Job.ipynb` submits it with `anyscale job submit`. On plain Ray, edit the path constants in `jobs_demo/create_extended_desc_job.py` and run it with `ray job submit` instead.
-
-## Provenance
-
-This is Ray Summit 2026 Anyscale course material, republished with permission for personal study. Original content copyright 2026 Anyscale.
